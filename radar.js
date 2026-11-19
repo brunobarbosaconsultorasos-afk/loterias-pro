@@ -29,73 +29,32 @@ async function buscarDadosOficiais(tipo, forcar) {
   var fonteUsada = '';
   var online = false;
 
-  // 1. Fonte Ultrarrápida: Base GitHub CDN (lê tanto Lista quanto Objeto)
   try {
-    var urlCdn = 'https://jsdelivr.net' + tipo + '.json';
-    var resGit = await fetch(urlCdn);
-    if (resGit.ok) {
-      var json = await resGit.json();
-      if (Array.isArray(json) && json.length > 0) {
-        var ordenado = json.slice().sort(function(a, b) { return Number(b.concurso || b.numero) - Number(a.concurso || a.numero); });
-        var ultItem = ordenado.at(0);
-        infoExtra.numeroUltimo = Number(ultItem.concurso || ultItem.numero) || 0;
+    var resLocal = await fetch('dados_caixa.json?t=' + Date.now());
+    if (resLocal.ok) {
+      var banco = await resLocal.json();
+      var g = banco[tipo];
+      if (g && g.numero) {
+        infoExtra.numeroUltimo = Number(g.numero) || 0;
         infoExtra.numeroAlvo = infoExtra.numeroUltimo + 1;
-        if (ultItem.data || ultItem.dataApuracao) infoExtra.dataUltimo = ultItem.data || ultItem.dataApuracao;
-        ultimas = ultItem.dezenas || ultItem.listaDezenas || new Array();
-        lista50 = ordenado.slice(0, 50).map(function(c) { return c.dezenas || c.listaDezenas; });
+        infoExtra.dataUltimo = g.dataApuracao || 'Oficial';
+        infoExtra.dataProximo = g.dataProximoConcurso || 'Próximo sorteio';
+        ultimas = Array.isArray(g.listaDezenas) ? g.listaDezenas : new Array();
+        if (g.valorEstimadoProximoConcurso) {
+          infoExtra.proximoValor = 'R$ ' + Number(g.valorEstimadoProximoConcurso).toLocaleString('pt-BR');
+        }
+        if (Array.isArray(g.listaMunicipioUFGanhadores)) {
+          infoExtra.ganhadoresLocais = g.listaMunicipioUFGanhadores.map(function(m) {
+            return (m.municipio || 'Cidade') + '/' + (m.uf || 'BR') + ' (' + (m.ganhadores || 1) + 'x)';
+          });
+        }
+        lista50 = new Array(ultimas);
         online = true;
-        fonteUsada = 'Base Oficial GitHub CDN (50 sorteios)';
-      } else if (json && typeof json === 'object') {
-        var mapa = new Map(Object.entries(json));
-        var chaves = Array.from(mapa.keys()).map(Number).sort(function(a, b) { return b - a; });
-        var ultNum = chaves.at(0) || 0;
-        if (ultNum > 0) {
-          infoExtra.numeroUltimo = ultNum;
-          infoExtra.numeroAlvo = ultNum + 1;
-          ultimas = mapa.get(String(ultNum)) || new Array();
-          lista50 = chaves.slice(0, 50).map(function(k) { return mapa.get(String(k)); });
-          online = true;
-          fonteUsada = 'Base Oficial GitHub CDN (50 sorteios)';
-        }
+        fonteUsada = 'Portal Oficial Caixa (Sincronizado via GitHub)';
       }
     }
   } catch (e) {}
 
-  // 2. Complemento em Tempo Real: API Guidi Brasil (Data, Prêmio Estimado e Cidades Ganhadoras)
-  try {
-    var resG = await fetch('https://guidi.dev.br' + tipo + '/ultimo');
-    if (resG.ok) {
-      var g = await resG.json();
-      var numApi = Number(g.numero) || 0;
-      if (numApi >= infoExtra.numeroUltimo) {
-        if (numApi > infoExtra.numeroUltimo && Array.isArray(g.listaDezenas) && lista50.length > 0) {
-          lista50.unshift(g.listaDezenas);
-        }
-        infoExtra.numeroUltimo = numApi;
-        infoExtra.numeroAlvo = numApi + 1;
-        if (Array.isArray(g.listaDezenas) && g.listaDezenas.length > 0) {
-          ultimas = g.listaDezenas;
-        }
-      }
-      if (g.dataApuracao) infoExtra.dataUltimo = g.dataApuracao;
-      if (g.dataProximoConcurso) infoExtra.dataProximo = g.dataProximoConcurso;
-      if (g.valorEstimadoProximoConcurso) {
-        infoExtra.proximoValor = 'R$ ' + Number(g.valorEstimadoProximoConcurso).toLocaleString('pt-BR');
-      }
-      if (Array.isArray(g.listaMunicipioUFGanhadores)) {
-        infoExtra.ganhadoresLocais = g.listaMunicipioUFGanhadores.map(function(m) {
-          return (m.municipio || 'Cidade') + '/' + (m.uf || 'BR') + ' (' + (m.ganhadores || 1) + 'x)';
-        });
-      }
-      online = true;
-      fonteUsada = fonteUsada ? 'GitHub CDN + API Caixa Tempo Real' : 'API Caixa Tempo Real';
-    }
-  } catch (e) {}
-
-  if (lista50.length === 0 && ultimas.length > 0) {
-    lista50 = new Array(ultimas);
-  }
-  // 3. Contingência caso totalmente sem internet
   if (!online) {
     var cfg = configs.get(tipo);
     for (var i = 0; i < 15; i++) {
@@ -104,11 +63,11 @@ async function buscarDadosOficiais(tipo, forcar) {
       lista50.push(Array.from(s));
     }
     ultimas = lista50.at(0);
-    fonteUsada = 'Modo Offline (Sem conexão)';
+    fonteUsada = 'Aguardando sincronização';
   }
 
   var pacote = {
-    concursoUltimo: infoExtra.numeroUltimo > 0 ? '#' + infoExtra.numeroUltimo : 'Offline',
+    concursoUltimo: infoExtra.numeroUltimo > 0 ? '#' + infoExtra.numeroUltimo : 'Pendente',
     concursoAlvo: infoExtra.numeroAlvo > 0 ? '#' + infoExtra.numeroAlvo : 'Próximo',
     ultimas: ultimas,
     lista50: lista50,
@@ -128,22 +87,22 @@ async function auditarRadar(forcar) {
   var stTopo = document.getElementById('status');
   var boxAlvo = document.getElementById('concurso-alvo');
 
-  if (painel) painel.innerHTML = '<div class="msg">Sincronizando com servidores oficiais...</div>';
+  if (painel) painel.innerHTML = '<div class="msg">Lendo base oficial do seu repositório...</div>';
 
   var inicio = Date.now();
   var dados = await buscarDadosOficiais(tipo, forcar);
   var ping = Date.now() - inicio;
 
   if (dados.online) {
-    stTopo.innerText = 'Online • Base Sincronizada (' + dados.lista50.length + ' sorteios)';
+    stTopo.innerText = 'Online • Portal Caixa Sincronizado';
     stTopo.style.color = '#00e676';
     stTopo.style.borderColor = '#00e676';
     boxAlvo.innerText = 'Alvo Vigente: ' + cfg.nome + ' ' + dados.concursoAlvo + ' (' + dados.infoExtra.dataProximo + ')';
   } else {
-    stTopo.innerText = 'Modo Offline • Verifique Rede';
-    stTopo.style.color = '#ff5252';
-    stTopo.style.borderColor = '#ff5252';
-    boxAlvo.innerText = 'Alvo Vigente: ' + cfg.nome + ' (Aguardando rede)';
+    stTopo.innerText = 'Aguardando Dados • Toque em Sincronizar';
+    stTopo.style.color = '#ffab00';
+    stTopo.style.borderColor = '#ffab00';
+    boxAlvo.innerText = 'Alvo Vigente: ' + cfg.nome;
   }
 
   if (painel) {
@@ -152,8 +111,8 @@ async function auditarRadar(forcar) {
       : '<span class="sub">Prêmio principal acumulou neste concurso ou dados regionais indisponíveis.</span>';
 
     painel.innerHTML =
-      '<div class="msg" style="border-color:' + (dados.online ? '#00e676' : '#ff5252') + ';">' +
-        '<strong>Status da Rede:</strong> ' + (dados.online ? 'CONECTADO (' + ping + 'ms)' : 'DESCONECTADO') + '<br>' +
+      '<div class="msg" style="border-color:' + (dados.online ? '#00e676' : '#ffab00') + ';">' +
+        '<strong>Status da Rede:</strong> ' + (dados.online ? 'CONECTADO (' + ping + 'ms)' : 'AGUARDANDO DADOS') + '<br>' +
         '<strong>Fonte Ativa:</strong> ' + dados.fonte +
       '</div>' +
       '<div class="msg" style="border-color:#2979ff;">' +
@@ -171,3 +130,4 @@ async function auditarRadar(forcar) {
       '</div>';
   }
 }
+  a
