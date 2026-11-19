@@ -48,7 +48,8 @@ async function buscarDadosOficiais(tipo, forcar) {
             return (m.municipio || 'Cidade') + '/' + (m.uf || 'BR') + ' (' + (m.ganhadores || 1) + 'x)';
           });
         }
-        lista50 = new Array(ultimas);
+        lista50 = Array.isArray(g.historico) && g.historico.length > 0 ? g.historico : new Array(ultimas);
+
         online = true;
         fonteUsada = 'Portal Oficial Caixa (Sincronizado via GitHub)';
       }
