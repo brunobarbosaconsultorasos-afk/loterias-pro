@@ -23,9 +23,20 @@ jobs:
           db = {}
           for j in jogos:
               try:
-                  req = urllib.request.Request('https://guidi.dev.br' + j + '/ultimo', headers={'User-Agent': 'Mozilla/5.0'})
-                  res = urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8')
-                  db[j] = json.loads(res)
+                  url = 'https://githubusercontent.com' + j + '.json'
+                  req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                  raw = json.loads(urllib.request.urlopen(req, context=ctx, timeout=15).read().decode('utf-8'))
+                  chaves = sorted([int(k) for k in raw.keys()], reverse=True)
+                  ult = chaves[0]
+                  db[j] = {
+                      'numero': ult,
+                      'listaDezenas': [str(n).zfill(2) for n in raw[str(ult)]],
+                      'historico': [[str(n).zfill(2) for n in raw[str(c)]] for c in chaves[:50]],
+                      'dataApuracao': 'Oficial Caixa',
+                      'dataProximoConcurso': 'Próximo Sorteio',
+                      'valorEstimadoProximoConcurso': 0,
+                      'listaMunicipioUFGanhadores': []
+                  }
               except Exception as e:
                   pass
           with open('dados_caixa.json', 'w', encoding='utf-8') as f:
