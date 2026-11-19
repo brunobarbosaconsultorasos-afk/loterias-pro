@@ -1,0 +1,15 @@
+{
+  "name": "Estrategista Loterias Pro",
+  "short_name": "Loterias Pro",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#00e676",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://w3.org' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%2309090b'/%3E%3Ccircle cx='256' cy='256' r='180' fill='%2300e676'/%3E%3Ctext x='256' y='310' font-size='180' font-family='sans-serif' font-weight='bold' text-anchor='middle' fill='%2309090b'%3E%24%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ]
+}

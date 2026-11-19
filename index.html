@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Estrategista Loterias Pro</title>
+  <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <header>
+    <h1>Estrategista Loterias Pro</h1>
+    <div id="status" class="status">Sincronizando Radar...</div>
+    <div id="concurso-alvo" class="alvo-box">Carregando Concurso Alvo...</div>
+  </header>
+
+  <!-- ABA 1: CONSELHO DOS 4 AGENTES -->
+  <main id="tela-conselho">
+    <label>1. Modalidade Oficial Caixa:</label>
+    <select id="loteria">
+      <option value="megasena">Mega-Sena (6 dezenas)</option>
+      <option value="lotofacil">Lotofácil (15 dezenas)</option>
+      <option value="quina">Quina (5 dezenas)</option>
+      <option value="lotomania">Lotomania (50 dezenas)</option>
+      <option value="maismilionaria">+Milionária (6 dezenas + 2 trevos)</option>
+      <option value="timemania">Timemania (10 dezenas)</option>
+      <option value="duplasena">Dupla Sena (6 dezenas)</option>
+      <option value="diadesorte">Dia de Sorte (7 dezenas)</option>
+      <option value="supersete">Super Sete (7 colunas)</option>
+      <option value="federal">Loteria Federal (Bilhete)</option>
+    </select>
+
+    <label>2. Postura do Conselho:</label>
+    <select id="estrategia">
+      <option value="mestre">Consenso Mestre (Equilibrada)</option>
+      <option value="quentes">Dezenas Mais Quentes</option>
+      <option value="zebras">Caça-Zebras (Mais Atrasadas)</option>
+    </select>
+
+    <label>3. Dezenas Fixas (ou toque no Mapa de Calor):</label>
+    <input type="text" id="fixas" placeholder="Ex: 05, 14, 28">
+
+    <button type="button" class="btn" id="btn-gerar">Convocar Conselho e Gerar</button>
+    <div id="resultado"></div>
+  </main>
+
+  <!-- ABA 2: TORNEIO TOP 10 MELHORES SEQUÊNCIAS -->
+  <main id="tela-top10" class="oculto">
+    <div class="card">
+      <strong class="verde">Torneio Matemático • Top Melhores</strong>
+      <p class="sub">Gera 100 combinações nas regras da modalidade e separa as mais fortes:</p>
+      <label>Quantidade de Melhores Jogos:</label>
+      <select id="qtd-top">
+        <option value="3">Top 3 Melhores Sequências</option>
+        <option value="5">Top 5 Melhores Sequências</option>
+        <option value="10" selected>Top 10 Melhores Sequências</option>
+      </select>
+      <button type="button" class="btn" id="btn-rodar-top">Gerar Ranking das Melhores</button>
+      <div id="lista-top10"></div>
+    </div>
+  </main>
+
+  <!-- ABA 3: MAPA DE CALOR TÁTIL -->
+  <main id="tela-mapa" class="oculto">
+    <div class="card">
+      <strong class="verde">Mapa de Calor (Sorteios Reais)</strong>
+      <p class="sub">Toque nas dezenas para fixar na próxima reunião:</p>
+      <div id="grade-calor" class="calor"></div>
+      <button type="button" class="btn" id="btn-voltar">Aplicar e Voltar</button>
+    </div>
+  </main>
+
+  <!-- ABA 4: COFRE CONFERIDOR -->
+  <main id="tela-cofre" class="oculto">
+    <div class="card" style="margin-top:0; margin-bottom:12px;">
+      <strong class="verde">Meu Cofre de Apostas</strong>
+      <p class="sub">Conferência automática com os resultados oficiais:</p>
+      <button type="button" class="btn-sec" style="width:100%;" id="btn-backup-cofre">Copiar Backup de Todos os Jogos</button>
+    </div>
+    <div id="lista-cofre"></div>
+  </main>
+
+  <!-- ABA 5: RADAR E MAPA DE GANHADORES -->
+  <main id="tela-monitor" class="oculto">
+    <div class="card">
+      <strong class="verde">Radar Oficial & Mapa de Ganhadores</strong>
+      <p class="sub">Fusão em tempo real (GitHub + Caixa) e cidades premiadas:</p>
+      <div id="painel-radar"></div>
+      <button type="button" class="btn" id="btn-sincronizar">Forçar Sincronização Agora</button>
+    </div>
+  </main>
+
+  <!-- BARRA DE NAVEGAÇÃO INFERIOR (5 ABAS) -->
+  <nav class="nav">
+    <button type="button" id="menu-conselho" class="ativa">🧠<br>Conselho</button>
+    <button type="button" id="menu-top10">🏆<br>Top 10</button>
+    <button type="button" id="menu-mapa">🌡️<br>Mapa</button>
+    <button type="button" id="menu-cofre">🔐<br>Cofre (<span id="qtd-cofre">0</span>)</button>
+    <button type="button" id="menu-monitor">📡<br>Radar</button>
+  </nav>
+
+  <script src="radar.js"></script>
+  <script src="agentes.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
